@@ -13,7 +13,6 @@ function DbConnect() {
     db.once('open', () => {
         console.log('DB Connected....')
     })
-
 }
 
 module.exports = DbConnect;

@@ -3,12 +3,12 @@ const express = require('express');
 const app = express();
 const router = require('./routes');
 const DbConnnect = require('./db');
-const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
+const cors = require('cors');
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: false}));
-app.use(cookieParser());
+const corsOptions = {
+    origin: ['http://localhost:3000']
+}
+app.use(cors(corsOptions));
 const PORT = process.env.PORT || 8000;
 DbConnnect();
 app.use(express.json());
