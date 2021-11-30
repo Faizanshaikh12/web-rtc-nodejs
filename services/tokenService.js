@@ -13,17 +13,17 @@ class TokenService {
         const refreshToken = jwt.sign(payload, refreshTokenSecret, {
             expiresIn: '1y',
         });
-        return { accessToken, refreshToken };
+        return {accessToken, refreshToken};
     }
 
-     //Refresh token store in database
-    async storeRefreshToken(token, userId){
-        try{
-          await Refresh.create({
+    //Refresh token store in database
+    async storeRefreshToken(token, userId) {
+        try {
+            await Refresh.create({
                 token,
                 userId
             })
-        } catch(err){
+        } catch (err) {
             console.log(err)
         }
     }
@@ -31,6 +31,22 @@ class TokenService {
     //Verify Access Token
     async verifyAccessToken(token) {
         return jwt.verify(token, accessTokenSecret);
+    }
+
+    async verifyRefreshToken(refreshToken) {
+        return jwt.verify(refreshToken, refreshTokenSecret);
+    }
+
+    async findRefreshToken(userId, refreshToken) {
+        return await Refresh.findOne({userId: userId, token: refreshToken});
+    }
+
+    async updateRefreshToken(userId, refreshToken) {
+        return await Refresh.updateOne({userId: userId}, {token: refreshToken});
+    }
+
+    async removeToken(refreshToken) {
+        return await Refresh.deleteOne({token: refreshToken});
     }
 
 }

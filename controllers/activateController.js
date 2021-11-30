@@ -1,19 +1,20 @@
 const Jimp = require('jimp');
 const path = require('path');
 const userService = require('../services/userService');
+const tokenService = require('../services/tokenService');
 const UserDto = require('../dtos/userDto');
 
 class ActivateController {
     async activate(req, res) {
         // Activation logic
-        const { name, avatar } = req.body;
+        const {name, avatar} = req.body;
         if (!name || !avatar) {
-            res.status(400).json({ message: 'All fields are required!' });
+            res.status(400).json({message: 'All fields are required!'});
         }
 
         // Image Base64
         const buffer = Buffer.from(
-            avatar.replace(/^data:image\/png;base64,/, ''),
+            avatar.replace(/^data:image\/(png|jpg|jpeg);base64,/, ''),
             'base64'
         );
         const imagePath = `${Date.now()}-${Math.round(
@@ -27,23 +28,23 @@ class ActivateController {
                 .resize(150, Jimp.AUTO)
                 .write(path.resolve(__dirname, `../storage/${imagePath}`));
         } catch (err) {
-            res.status(500).json({ message: 'Could not process the image' });
+            res.status(500).json({message: 'Could not process the image'});
         }
 
         const userId = req.user._id;
         // Update user
         try {
-            const user = await userService.findUser({ _id: userId });
+            const user = await userService.findUser({_id: userId});
             if (!user) {
-                res.status(404).json({ message: 'User not found!' });
+                res.status(404).json({message: 'User not found!'});
             }
             user.activated = true;
             user.name = name;
             user.avatar = `/storage/${imagePath}`;
             user.save();
-            res.json({ user: new UserDto(user), auth: true });
+            res.json({user: new UserDto(user), auth: true});
         } catch (err) {
-            res.status(500).json({ message: 'Something went wrong!' });
+            res.status(500).json({message: 'Something went wrong!'});
         }
     }
 }
