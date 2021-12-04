@@ -6,13 +6,19 @@ const userSchema = new Schema({
         type: String,
         required: true,
     },
-    name:{
+    name: {
         type: String,
         required: false,
     },
     avatar: {
         type: String,
         required: false,
+        get: (avatar) => {
+            if (avatar) {
+                return `${process.env.BASE_URL}${avatar}`
+            }
+            return avatar
+        }
     },
     activated: {
         type: Boolean,
@@ -20,7 +26,8 @@ const userSchema = new Schema({
         default: false
     },
 }, {
-    timestamps: true
+    timestamps: true,
+    toJSON: {getters: true}
 })
 
 module.exports = mongoose.model('User', userSchema, 'users');
