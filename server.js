@@ -41,12 +41,62 @@ io.on('connection', (socket) => {
         //map
         const clients = Array.from(io.sockets.adapter.rooms.get(roomId) || []);
         clients.forEach(clientId => {
-            io.to(clientId).emit(ACTIONS.ADD_PEER, {})
+            io.to(clientId).emit(ACTIONS.ADD_PEER, {
+                peerId: socket.id,
+                createOffer: false,
+                user
+            });
+
+            socket.emit(ACTIONS.ADD_PEER, {
+                peerId: clientId,
+                createOffer: true,
+                user: socketUserMapping[clientId],
+            });
         });
-        socket.emit(ACTIONS.ADD_PEER, {});
+
         socket.join(roomId);
-        console.log(clients);
     });
-})
+
+    //Handle relay ice
+    socket.on(ACTIONS.RELAY_ICE, ({peerId, icecandidate}) => {
+        io.to(peerId).emit(ACTIONS.ICE_CANDIDATE, {
+            peerId: socket.id,
+            icecandidate
+        })
+    })
+
+    //Handle relay sdp
+    socket.on(ACTIONS.RELAY_SDP, ({peerId, sessionDescription}) => {
+        io.to(peerId).emit(ACTIONS.SESSION_DESCRIPTION, {
+            peerId: socket.id,
+            sessionDescription
+        })
+    });
+
+    //Handle leave room
+    const leaveRoom = ({roomId}) => {
+        const {rooms} = socket;
+        Array.from(rooms).forEach((roomId) => {
+            const clients = Array.from(io.sockets.adapter.rooms.get(roomId) || []
+            );
+
+            clients.forEach(clientId => {
+                io.to(clientId).emit(ACTIONS.REMOVE_PEER, {
+                    peerId: socket.id,
+                    userId: socketUserMapping[socket.id]?.id
+                });
+                socket.emit(ACTIONS.REMOVE_PEER, {
+                    peerId: clientId,
+                    userId: socketUserMapping[clientId]?.id
+                })
+            });
+            socket.leave(roomId);
+        });
+        delete socketUserMapping[socket.id];
+    };
+    socket.on(ACTIONS.LEAVE, leaveRoom);
+    socket.on('disconnecting', leaveRoom);
+
+});
 
 server.listen(PORT, () => console.log(`Listing on port ${PORT}`));
